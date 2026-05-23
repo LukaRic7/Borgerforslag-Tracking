@@ -74,8 +74,7 @@ def fetch_all(user_agent:str=USER_AGENT) -> list[dict]:
     data:dict[str, list[dict]] = response.json()
     if not data: return []
 
-
-    __last_call_ts = int(__da2en_date(suggestion.get('date')).timestamp())
+    __last_call_ts = int(datetime.now(tz=timezone.utc).timestamp())
 
     suggestions = []
     for suggestion in data.get('data'):
@@ -86,8 +85,8 @@ def fetch_all(user_agent:str=USER_AGENT) -> list[dict]:
         suggestions.append({
             'id': suggestion.get('externalId'),
             'title': suggestion.get('title'),
-            'created_ts': __last_call_ts,
-            'fetched_ts': int(datetime.now(tz=timezone.utc).timestamp()),
+            'created_ts': int(__da2en_date(suggestion.get('date')).timestamp()),
+            'fetched_ts': __last_call_ts,
             'votes': suggestion.get('votes')
         })
     
