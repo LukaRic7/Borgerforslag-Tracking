@@ -26,6 +26,29 @@
         .card-transition {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #101013;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, rgba(99,102,241,0.7), rgba(39,39,42,0.95));
+            border-radius: 9999px;
+            border: 2px solid #101013;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, rgba(129,140,248,0.9), rgba(63,63,70,1));
+        }
+
+        ::-webkit-scrollbar-corner {
+            background: #101013;
+        }
     </style>
 </head>
 <body class="font-sans text-zinc-100 min-h-full bg-zinc-950 selection:bg-zinc-800">
@@ -79,10 +102,10 @@
                     <label for="sort-select" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Sortér:</label>
                     <div class="flex items-center gap-1.5">
                         <select id="sort-select" class="bg-zinc-900 border border-zinc-750 hover:border-zinc-650 text-sm text-zinc-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-550/20 focus:border-indigo-500 cursor-pointer transition-all">
-                            <option value="votes" class="bg-zinc-900 text-zinc-200">Stemmer</option>
                             <option value="created" class="bg-zinc-900 text-zinc-200">Oprettet</option>
+                            <option value="votes" class="bg-zinc-900 text-zinc-200">Stemmer</option>
                             <option value="speed" class="bg-zinc-900 text-zinc-200">Hastighed</option>
-                            <option value="max12h" class="bg-zinc-900 text-zinc-200">Top 12t</option>
+                            <option value="max7d" class="bg-zinc-900 text-zinc-200">Top 7d</option>
                         </select>
                         <button id="sort-order-btn" class="bg-zinc-900 border border-zinc-750 hover:border-zinc-650 text-zinc-200 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-indigo-550/20 focus:border-indigo-500 cursor-pointer transition-all flex items-center justify-center active:scale-95" title="Faldende (Klik for Stigende)">
                             <svg id="sort-order-icon" class="w-4 h-4 text-indigo-400 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -307,15 +330,15 @@
             const ratePerSec = timeElapsedTotal > 0 ? currentVotes / timeElapsedTotal : 0;
             const estimatedFinal = currentVotes + (ratePerSec * (timeLeftSec > 0 ? timeLeftSec : 0));
 
-            // Sliding window 12 timer topscore
-            let max12h = 0;
+            // Sliding window 7 day topscore
+            let max7d = 0;
             let left = 0;
             for (let right = 0; right < votesArr.length; right++) {
-                while (votesArr[right].timestamp - votesArr[left].timestamp > 12 * 3600) {
+                while (votesArr[right].timestamp - votesArr[left].timestamp > 24 * 7 * 3600) {
                     left++;
                 }
                 let growth = votesArr[right].votes - votesArr[left].votes;
-                if (growth > max12h) max12h = growth;
+                if (growth > max7d) max7d = growth;
             }
 
             // Sidste 3 timers væksthastighed pr. minut
@@ -370,7 +393,7 @@
                 isExpired,
                 ratePerSec,
                 estimatedFinal,
-                max12h,
+                max7d,
                 rateLast3h,
                 statusColor,
                 borderStyle,
@@ -397,9 +420,9 @@
                         valA = a.ratePerSec;
                         valB = b.ratePerSec;
                         break;
-                    case 'max12h':
-                        valA = a.max12h;
-                        valB = b.max12h;
+                    case 'max7d':
+                        valA = a.max7d;
+                        valB = b.max7d;
                         break;
                     default:
                         return 0;
@@ -452,7 +475,7 @@
                             ${prop.id}
                         </span>
                         <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-zinc-800/80 text-zinc-400">
-                            ${new Date(prop.created_ts * 1000).toLocaleDateString('da-DK')}
+                            ${new Date(prop.created_ts * 1000).toLocaleDateString('da-DK').replaceAll('.', '/')}
                         </span>
                     </div>
 
@@ -475,8 +498,8 @@
                             <strong class="text-sm font-bold ${prop.textAccent}">${Math.round(prop.estimatedFinal).toLocaleString('da-DK')}</strong>
                         </div>
                         <div>
-                            <span class="text-zinc-500 block text-[10px] uppercase tracking-wider font-semibold">Topfart 12t</span>
-                            <strong class="text-sm font-bold text-zinc-300">+${prop.max12h.toLocaleString('da-DK')}</strong>
+                            <span class="text-zinc-500 block text-[10px] uppercase tracking-wider font-semibold">Topfart 7d</span>
+                            <strong class="text-sm font-bold text-zinc-300">+${prop.max7d.toLocaleString('da-DK')}</strong>
                         </div>
                     </div>
 
@@ -502,16 +525,6 @@
                                 <canvas id="chart-total-${prop.id}"></canvas>
                             </div>
                         </div>
-                        
-                        <div class="relative">
-                            <div class="text-[10px] font-semibold text-zinc-500 uppercase tracking-wide mb-1 flex justify-between">
-                                <span>Nye stemmer pr. minut (Sidste 3t)</span>
-                                <span class="text-zinc-400 font-bold">${prop.rateLast3h.toFixed(1)}/min</span>
-                            </div>
-                            <div class="h-32 bg-zinc-950/80 border border-zinc-900 rounded-xl overflow-hidden">
-                                <canvas id="chart-rate-${prop.id}"></canvas>
-                            </div>
-                        </div>
                     </div>
                 `;
                 
@@ -520,7 +533,6 @@
                 // Rendering af de skarpe Canvas grafer (DPI skaleret)
                 requestAnimationFrame(() => {
                     drawTotalChart(`chart-total-${prop.id}`, prop.votesArr, prop.created_ts, prop.endTs, prop.estimatedFinal);
-                    draw3hChart(`chart-rate-${prop.id}`, prop.votesArr);
                 });
             });
         }
@@ -732,107 +744,6 @@
                 const labelMid = new Date(((minTime + maxTime) / 2) * 1000).toLocaleDateString('da-DK', { day: '2-digit', month: 'short' });
                 ctx.textAlign = 'center';
                 ctx.fillText(labelMid, padLeft + graphWidth / 2, graphHeight + 4);
-            }
-        }
-
-        function draw3hChart(canvasId, votes) {
-            const canvas = document.getElementById(canvasId);
-            if (!canvas || votes.length < 2) return;
-
-            const latestTs = votes[votes.length - 1].timestamp;
-            const threeHoursAgo = latestTs - (3 * 3600);
-            
-            // Sorter og segmenter til de seneste 3 timer
-            const recentVotes = votes.filter(v => v.timestamp >= threeHoursAgo);
-            if (recentVotes.length < 2) return;
-
-            const { ctx, width, height } = setupCanvasDPI(canvas);
-
-            const axisSpace = 20;
-            const padLeft = 38; // Matcher den store grafs venstre-justering
-            const padRight = 12;
-            const padTop = 12;
-            
-            const graphWidth = width - padLeft - padRight;
-            const graphHeight = height - axisSpace;
-
-            // Beregn differentieret tilvækst imellem datapunkter
-            const rateData = [];
-            for (let i = 1; i < recentVotes.length; i++) {
-                const growth = recentVotes[i].votes - recentVotes[i - 1].votes;
-                rateData.push({
-                    ts: recentVotes[i].timestamp,
-                    growth: growth > 0 ? growth : 0 
-                });
-            }
-
-            const minTime = threeHoursAgo;
-            const maxTime = latestTs;
-            const maxGrowth = Math.max(...rateData.map(r => r.growth), 1);
-            const rangeTime = maxTime - minTime;
-
-            // 1. Tegn gridline og tal på Y-aksen (0 og max)
-            ctx.fillStyle = '#71717a';
-            ctx.font = '8px Inter, sans-serif';
-            ctx.textAlign = 'right';
-            ctx.textBaseline = 'middle';
-
-            // Bund-værdi
-            ctx.fillText('0', padLeft - 6, graphHeight - padTop);
-            
-            // Top-værdi
-            ctx.fillText(`+${maxGrowth}`, padLeft - 6, padTop);
-
-            // Tynd vandret linje øverst og nederst på grafen
-            ctx.beginPath();
-            ctx.strokeStyle = '#27272a';
-            ctx.lineWidth = 0.5;
-            ctx.moveTo(padLeft, padTop);
-            ctx.lineTo(width - padRight, padTop);
-            ctx.moveTo(padLeft, graphHeight - padTop);
-            ctx.lineTo(width - padRight, graphHeight - padTop);
-            ctx.stroke();
-
-            // 2. Tegn X-akse bundlinje
-            ctx.beginPath();
-            ctx.strokeStyle = '#3f3f46';
-            ctx.lineWidth = 1;
-            ctx.moveTo(padLeft, graphHeight);
-            ctx.lineTo(width - padRight, graphHeight);
-            ctx.stroke();
-
-            // 3. Tegn søjlerne (bars)
-            ctx.fillStyle = '#38bdf8'; // Sky Blue
-            const barWidth = Math.max(1.5, graphWidth / rateData.length - 1.5);
-
-            rateData.forEach(d => {
-                const x = padLeft + ((d.ts - minTime) / rangeTime) * graphWidth;
-                const heightBar = (d.growth / maxGrowth) * (graphHeight - padTop * 2);
-                const y = (graphHeight - padTop) - heightBar;
-                
-                // Center-align søjler på deres x-punkt
-                ctx.fillRect(x - (barWidth / 2), y, barWidth, heightBar);
-            });
-
-            // 4. Tegn X-akse tidslabels (HH:MM format)
-            ctx.fillStyle = '#a1a1aa';
-            ctx.font = '8px Inter, sans-serif';
-            ctx.textBaseline = 'top';
-
-            const formatTime = (ts) => new Date(ts * 1000).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
-
-            // Venstre (3 timer siden)
-            ctx.textAlign = 'left';
-            ctx.fillText(formatTime(minTime), padLeft, graphHeight + 4);
-
-            // Højre (Nu)
-            ctx.textAlign = 'right';
-            ctx.fillText(formatTime(maxTime), width - padRight, graphHeight + 4);
-
-            // Midten (1.5 timer siden)
-            if (width > 180) {
-                ctx.textAlign = 'center';
-                ctx.fillText(formatTime(minTime + 5400), padLeft + graphWidth / 2, graphHeight + 4);
             }
         }
     </script>
