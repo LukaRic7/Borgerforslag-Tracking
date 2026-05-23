@@ -1,8 +1,16 @@
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException
 
 from data import get_table_data, get_tables_meta
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origin_regex=r"null|http://192\.168\.\d+\.\d+.*|http://localhost.*",
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get('/')
 def status():
