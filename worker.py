@@ -17,7 +17,7 @@ def run_worker():
                     suggestion.get('fetched_ts')
                 )
             except FileNotFoundError:
-                print(f'New borgerforslag detected, ID: {suggestion.get('id')}')
+                print(f'New borgerforslag detected, ID: {suggestion.get("id")}')
                 create_new_table(suggestion)
 
         time.sleep(FETCHING_INTERVAL_SEC)
