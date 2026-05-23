@@ -10,8 +10,6 @@ DANISH_MONTHS = {
     'november': 'November', 'december': 'December',
 }
 
-__last_call_ts = 0
-
 def __da2en_date(date:str) -> datetime:
     """
     **Convert a danish date string into a datetime object with the standard
@@ -33,16 +31,6 @@ def __da2en_date(date:str) -> datetime:
     date_obj = datetime.strptime(normalized, '%d. %B %Y')
     return date_obj.replace(tzinfo=timezone.utc)
 
-def get_next_call_ts() -> int:
-    """
-    **Get the UTC timestamp of when the next call is projected to happen.**
-    
-    *Returns*:
-    - (int): The UTC timestamp.
-    """
-
-    return __last_call_ts + 60*60*3 # Assuming 3 hours intervals
-
 def fetch_all(user_agent:str=USER_AGENT) -> list[dict]:
     """
     **Fetch all currently active borgerforslag and parse them into dicts.**
@@ -55,8 +43,6 @@ def fetch_all(user_agent:str=USER_AGENT) -> list[dict]:
     *Returns*:
     - (list[dict]): A list of all the active borgerforslag.
     """
-
-    global __last_call_ts
 
     payload = {
         'filter': 'active', 'sortOrder': 'NewestFirst',
@@ -74,8 +60,6 @@ def fetch_all(user_agent:str=USER_AGENT) -> list[dict]:
     data:dict[str, list[dict]] = response.json()
     if not data: return []
 
-    __last_call_ts = int(datetime.now(tz=timezone.utc).timestamp())
-
     suggestions = []
     for suggestion in data.get('data'):
         if suggestion.get('status') != 'ongoing':
@@ -86,7 +70,7 @@ def fetch_all(user_agent:str=USER_AGENT) -> list[dict]:
             'id': suggestion.get('externalId'),
             'title': suggestion.get('title'),
             'created_ts': int(__da2en_date(suggestion.get('date')).timestamp()),
-            'fetched_ts': __last_call_ts,
+            'fetched_ts': int(datetime.now(tz=timezone.utc).timestamp()),
             'votes': suggestion.get('votes')
         })
     
