@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="da" class="h-full bg-zinc-950">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Borgerforslag Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        .card-transition {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="font-sans text-zinc-100 min-h-full bg-zinc-950 selection:bg-zinc-800">
+
+    <!-- Dashboard Container -->
+    <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Header Panel -->
+        <header class="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-6 mb-6 backdrop-blur-md shadow-xl flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-zinc-850 rounded-xl border border-zinc-700/50 flex items-center justify-center">
+                    <!-- New Professional Ballot Box / Civic Icon -->
+                    <svg class="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight text-white">Borgerforslag Monitor</h1>
+                    <p id="status-text" class="text-sm text-zinc-400 mt-0.5">Henter det fulde overblik...</p>
+                </div>
+            </div>
+
+            <!-- Controls, Sorting & Toggles -->
+            <div class="flex flex-wrap items-center gap-4 lg:gap-6">
+                
+                <!-- Toggle Switches Group -->
+                <div class="flex flex-wrap items-center gap-4 bg-zinc-950/60 px-4 py-2.5 rounded-xl border border-zinc-850">
+                    <!-- Goal Line Switch -->
+                    <label class="relative inline-flex items-center cursor-pointer select-none">
+                        <input type="checkbox" id="toggle-goal" class="sr-only peer" checked>
+                        <div class="w-9 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-zinc-950 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-400 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-rose-500 peer-checked:after:bg-white"></div>
+                        <span class="ms-2 text-xs font-semibold text-zinc-300">Mållinje (50k)</span>
+                    </label>
+
+                    <!-- Projection Line Switch -->
+                    <label class="relative inline-flex items-center cursor-pointer select-none">
+                        <input type="checkbox" id="toggle-projection" class="sr-only peer" checked>
+                        <div class="w-9 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-zinc-950 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-400 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-500 peer-checked:after:bg-white"></div>
+                        <span class="ms-2 text-xs font-semibold text-zinc-300">Projektion</span>
+                    </label>
+
+                    <!-- Active Only Switch -->
+                    <label class="relative inline-flex items-center cursor-pointer select-none">
+                        <input type="checkbox" id="toggle-active-only" class="sr-only peer">
+                        <div class="w-9 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-zinc-950 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-400 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 peer-checked:after:bg-white"></div>
+                        <span class="ms-2 text-xs font-semibold text-zinc-300">Kun aktuelle</span>
+                    </label>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <label for="sort-select" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Sortér:</label>
+                    <div class="flex items-center gap-1.5">
+                        <select id="sort-select" class="bg-zinc-900 border border-zinc-750 hover:border-zinc-650 text-sm text-zinc-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-550/20 focus:border-indigo-500 cursor-pointer transition-all">
+                            <option value="votes" class="bg-zinc-900 text-zinc-200">Stemmer</option>
+                            <option value="created" class="bg-zinc-900 text-zinc-200">Oprettet</option>
+                            <option value="speed" class="bg-zinc-900 text-zinc-200">Hastighed</option>
+                            <option value="max12h" class="bg-zinc-900 text-zinc-200">Top 12t</option>
+                        </select>
+                        <button id="sort-order-btn" class="bg-zinc-900 border border-zinc-750 hover:border-zinc-650 text-zinc-200 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-indigo-550/20 focus:border-indigo-500 cursor-pointer transition-all flex items-center justify-center active:scale-95" title="Faldende (Klik for Stigende)">
+                            <svg id="sort-order-icon" class="w-4 h-4 text-indigo-400 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <!-- Default: Descending arrow path -->
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button id="refresh-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl px-4 py-2.5 shadow-lg shadow-indigo-600/20 active:scale-95 transition-all flex items-center justify-center gap-2 border border-indigo-500/30">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path>
+                    </svg>
+                    <span>Opdater data</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats Overview & Dashboard Metrics -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
+            <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3.5 flex flex-col justify-between shadow-md">
+                <span class="text-zinc-500 text-[10px] font-bold uppercase tracking-wider">Forslag i alt</span>
+                <span id="stat-total" class="text-2xl font-extrabold text-white mt-1">-</span>
+            </div>
+            <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3.5 flex flex-col justify-between shadow-md">
+                <span class="text-zinc-500 text-[10px] font-bold uppercase tracking-wider">Udløbne</span>
+                <span id="stat-expired" class="text-2xl font-extrabold text-rose-400 mt-1">-</span>
+            </div>
+            <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3.5 flex flex-col justify-between shadow-md">
+                <span class="text-zinc-500 text-[10px] font-bold uppercase tracking-wider">Aktuelle i gang</span>
+                <span id="stat-active" class="text-2xl font-extrabold text-emerald-400 mt-1">-</span>
+            </div>
+            <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3.5 flex flex-col justify-between shadow-md">
+                <span class="text-zinc-500 text-[10px] font-bold uppercase tracking-wider">Aktuelle ≥50k</span>
+                <span id="stat-active-reached" class="text-2xl font-extrabold text-emerald-500 mt-1">-</span>
+            </div>
+            <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3.5 flex flex-col justify-between shadow-md">
+                <span class="text-zinc-500 text-[10px] font-bold uppercase tracking-wider">Aktuelle &lt;50k</span>
+                <span id="stat-active-not-reached" class="text-2xl font-extrabold text-zinc-300 mt-1">-</span>
+            </div>
+            <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3.5 flex flex-col justify-between shadow-md border-l-4 border-l-sky-500">
+                <span class="text-zinc-500 text-[10px] font-bold uppercase tracking-wider">Proj. nået (Akt.)</span>
+                <span id="stat-active-proj-reach" class="text-2xl font-extrabold text-sky-400 mt-1">-</span>
+            </div>
+            <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3.5 flex flex-col justify-between shadow-md border-l-4 border-l-amber-500">
+                <span class="text-zinc-500 text-[10px] font-bold uppercase tracking-wider">Proj. fejlet (Akt.)</span>
+                <span id="stat-active-proj-fail" class="text-2xl font-extrabold text-amber-400 mt-1">-</span>
+            </div>
+        </div>
+
+        <!-- Legend & Color Guides -->
+        <div class="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-4 mb-8 flex flex-wrap gap-x-6 gap-y-3 justify-center md:justify-start text-xs font-medium text-zinc-400">
+            <span class="text-zinc-500 uppercase tracking-wider font-bold mr-2 self-center">Status farver:</span>
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-emerald-500 shadow-md shadow-emerald-500/20"></span>
+                <span>Nået ≥50k</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-sky-500 shadow-md shadow-sky-500/20"></span>
+                <span>Forventes at nå målet</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-amber-500 shadow-md shadow-amber-500/20"></span>
+                <span>Når det næppe</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-rose-500 shadow-md shadow-rose-500/20"></span>
+                <span>Udløbet uden mål</span>
+            </div>
+        </div>
+
+        <!-- Grid Structure for Proposal Cards -->
+        <div id="grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div id="loading" class="col-span-full py-20 flex flex-col items-center justify-center gap-3">
+                <div class="w-10 h-10 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
+                <p class="text-zinc-400 font-medium">Forbinder til borgerforslag API...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://192.168.0.49:1425'; // Heh, fuck you scraper, LAN only
+        let proposals = [];
+        let showGoalLine = true;
+        let showProjectionLine = true;
+        let showActiveOnly = false;
+        let sortOrder = 'desc'; // 'desc' = faldende, 'asc' = stigende
+
+        // DOM elements
+        const grid = document.getElementById('grid');
+        const sortSelect = document.getElementById('sort-select');
+        const sortOrderBtn = document.getElementById('sort-order-btn');
+        const sortOrderIcon = document.getElementById('sort-order-icon');
+        const refreshBtn = document.getElementById('refresh-btn');
+        const statusText = document.getElementById('status-text');
+        const toggleGoal = document.getElementById('toggle-goal');
+        const toggleProjection = document.getElementById('toggle-projection');
+        const toggleActiveOnly = document.getElementById('toggle-active-only');
+
+        // Event hooks
+        refreshBtn.addEventListener('click', fetchData);
+        sortSelect.addEventListener('change', renderGrid);
+        
+        sortOrderBtn.addEventListener('click', () => {
+            sortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
+            
+            // Opdater knap-ikon og hjælpetekst dynamisk
+            if (sortOrder === 'desc') {
+                sortOrderIcon.classList.toggle('rotate-180');
+                sortOrderBtn.title = "Faldende (Klik for Stigende)";
+            } else {
+                sortOrderIcon.classList.toggle('rotate-180');
+                sortOrderBtn.title = "Stigende (Klik for Faldende)";
+            }
+            renderGrid();
+        });
+
+        toggleGoal.addEventListener('change', (e) => {
+            showGoalLine = e.target.checked;
+            renderGrid();
+        });
+
+        toggleProjection.addEventListener('change', (e) => {
+            showProjectionLine = e.target.checked;
+            renderGrid();
+        });
+
+        toggleActiveOnly.addEventListener('change', (e) => {
+            showActiveOnly = e.target.checked;
+            renderGrid();
+        });
+
+        // Run application
+        fetchData();
+
+        async function fetchData() {
+            try {
+                grid.innerHTML = `
+                    <div class="col-span-full py-20 flex flex-col items-center justify-center gap-3">
+                        <div class="w-10 h-10 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
+                        <p class="text-zinc-400 font-medium">Henter ID liste fra metas...</p>
+                    </div>
+                `;
+                statusText.innerText = 'Henter unikke ID-koder...';
+                
+                const metaRes = await fetch(`${API_BASE}/get-metas`);
+                const ids = await metaRes.json();
+                
+                statusText.innerText = `Opdaterer ${ids.length} borgerforslag...`;
+                
+                // Hent alle tabeller asynkront og parallelt for bedst performance
+                const fetchPromises = ids.map(id => 
+                    fetch(`${API_BASE}/get-table/${id}`)
+                        .then(res => res.json())
+                        .then(data => ({ id, ...data }))
+                        .catch(err => {
+                            console.error(`Kunne ikke hente data for ID: ${id}`, err);
+                            return null;
+                        })
+                );
+                
+                const rawData = await Promise.all(fetchPromises);
+                
+                // Filtrer fejlbehæftede kald fra og processér dataene
+                proposals = rawData.filter(d => d !== null).map(processProposal);
+                
+                statusText.innerText = `Sidst synkroniseret: kl ${new Date().toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' })}`;
+                
+                // Update stats cards
+                updateStats();
+                
+                renderGrid();
+            } catch (error) {
+                console.error(error);
+                grid.innerHTML = `
+                    <div class="col-span-full bg-rose-950/20 border border-rose-900/50 rounded-2xl p-8 text-center">
+                        <svg class="w-12 h-12 text-rose-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <h3 class="text-lg font-bold text-white mb-1">Kunne ikke oprette forbindelse</h3>
+                        <p class="text-zinc-400 text-sm">Kontroller at din lokale API kører på http://192.168.0.49:1425/</p>
+                    </div>
+                `;
+                statusText.innerText = 'Forbindelsesfejl.';
+            }
+        }
+
+        function updateStats() {
+            const total = proposals.length;
+            const expired = proposals.filter(p => p.isExpired).length;
+            const active = proposals.filter(p => !p.isExpired).length;
+            const activeReached = proposals.filter(p => !p.isExpired && p.currentVotes >= 50000).length;
+            const activeNotReached = proposals.filter(p => !p.isExpired && p.currentVotes < 50000).length;
+            const activeProjectedReach = proposals.filter(p => !p.isExpired && p.currentVotes < 50000 && p.estimatedFinal >= 50000).length;
+            const activeProjectedFail = proposals.filter(p => !p.isExpired && p.currentVotes < 50000 && p.estimatedFinal < 50000).length;
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-expired').innerText = expired;
+            document.getElementById('stat-active').innerText = active;
+            document.getElementById('stat-active-reached').innerText = activeReached;
+            document.getElementById('stat-active-not-reached').innerText = activeNotReached;
+            document.getElementById('stat-active-proj-reach').innerText = activeProjectedReach;
+            document.getElementById('stat-active-proj-fail').innerText = activeProjectedFail;
+        }
+
+        function processProposal(data) {
+            const created = data.created_ts;
+            const now = Math.floor(Date.now() / 1000);
+            const votesArr = data.votes || [];
+            
+            // Sorter efter tidspunkt
+            votesArr.sort((a, b) => a.timestamp - b.timestamp);
+            
+            const currentVotes = votesArr.length > 0 ? votesArr[votesArr.length - 1].votes : 0;
+            
+            // Slutdato er altid præcis 180 dage efter oprettelse
+            const endTs = created + (180 * 24 * 3600); 
+            const timeLeftSec = endTs - now;
+            const isExpired = timeLeftSec <= 0;
+
+            // Progression rate (stemmer pr. sekund fra start til nu)
+            const timeElapsedTotal = now - created;
+            const ratePerSec = timeElapsedTotal > 0 ? currentVotes / timeElapsedTotal : 0;
+            const estimatedFinal = currentVotes + (ratePerSec * (timeLeftSec > 0 ? timeLeftSec : 0));
+
+            // Sliding window 12 timer topscore
+            let max12h = 0;
+            let left = 0;
+            for (let right = 0; right < votesArr.length; right++) {
+                while (votesArr[right].timestamp - votesArr[left].timestamp > 12 * 3600) {
+                    left++;
+                }
+                let growth = votesArr[right].votes - votesArr[left].votes;
+                if (growth > max12h) max12h = growth;
+            }
+
+            // Sidste 3 timers væksthastighed pr. minut
+            let last3HoursVotes = [];
+            if (votesArr.length > 0) {
+                const latestTs = votesArr[votesArr.length - 1].timestamp;
+                const threeHoursAgo = latestTs - (3 * 3600);
+                last3HoursVotes = votesArr.filter(v => v.timestamp >= threeHoursAgo);
+            }
+            
+            let rateLast3h = 0;
+            if (last3HoursVotes.length > 1) {
+                const firstIn3h = last3HoursVotes[0];
+                const lastIn3h = last3HoursVotes[last3HoursVotes.length - 1];
+                const minutesDiff = (lastIn3h.timestamp - firstIn3h.timestamp) / 60;
+                rateLast3h = minutesDiff > 0 ? (lastIn3h.votes - firstIn3h.votes) / minutesDiff : 0;
+            }
+
+            // Match statusspecifikke Tailwind-farver, klasser og glød
+            let statusColor = '';
+            let borderStyle = '';
+            let gradientStyle = '';
+            let textAccent = '';
+
+            if (currentVotes >= 50000) {
+                statusColor = 'green';
+                borderStyle = 'border-emerald-500/40 hover:border-emerald-400 focus:ring-emerald-500/20';
+                gradientStyle = 'from-zinc-900 to-emerald-950/20';
+                textAccent = 'text-emerald-400';
+            } else if (isExpired) {
+                statusColor = 'red';
+                borderStyle = 'border-rose-500/40 hover:border-rose-400 focus:ring-rose-500/20';
+                gradientStyle = 'from-zinc-900 to-rose-950/20';
+                textAccent = 'text-rose-400';
+            } else if (estimatedFinal >= 50000) {
+                statusColor = 'blue';
+                borderStyle = 'border-sky-500/40 hover:border-sky-400 focus:ring-sky-500/20';
+                gradientStyle = 'from-zinc-900 to-sky-950/20';
+                textAccent = 'text-sky-400';
+            } else {
+                statusColor = 'yellow';
+                borderStyle = 'border-amber-500/40 hover:border-amber-400 focus:ring-amber-500/20';
+                gradientStyle = 'from-zinc-900 to-amber-950/20';
+                textAccent = 'text-amber-400';
+            }
+
+            return {
+                ...data,
+                currentVotes,
+                endTs,
+                timeLeftSec,
+                isExpired,
+                ratePerSec,
+                estimatedFinal,
+                max12h,
+                rateLast3h,
+                statusColor,
+                borderStyle,
+                gradientStyle,
+                textAccent,
+                votesArr
+            };
+        }
+
+        function sortData(list) {
+            const sortBy = sortSelect.value;
+            list.sort((a, b) => {
+                let valA, valB;
+                switch (sortBy) {
+                    case 'created':
+                        valA = a.created_ts;
+                        valB = b.created_ts;
+                        break;
+                    case 'votes':
+                        valA = a.currentVotes;
+                        valB = b.currentVotes;
+                        break;
+                    case 'speed':
+                        valA = a.ratePerSec;
+                        valB = b.ratePerSec;
+                        break;
+                    case 'max12h':
+                        valA = a.max12h;
+                        valB = b.max12h;
+                        break;
+                    default:
+                        return 0;
+                }
+                
+                // Sorter enten faldende (desc) eller stigende (asc)
+                if (sortOrder === 'desc') {
+                    return valB - valA;
+                } else {
+                    return valA - valB;
+                }
+            });
+        }
+
+        function renderGrid() {
+            // Apply filtering
+            let filteredProposals = [...proposals];
+            if (showActiveOnly) {
+                filteredProposals = filteredProposals.filter(p => !p.isExpired);
+            }
+
+            // Apply sorting
+            sortData(filteredProposals);
+            grid.innerHTML = '';
+            
+            if (filteredProposals.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full py-16 bg-zinc-900/50 border border-zinc-850 rounded-2xl text-center">
+                        <p class="text-zinc-500 font-medium text-sm">Ingen aktuelle forslag matchede dine kriterier.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filteredProposals.forEach((prop) => {
+                const pct = Math.min((prop.currentVotes / 50000) * 100, 100);
+                const endDate = new Date(prop.endTs * 1000).toLocaleDateString('da-DK', { day: '2-digit', month: 'short', year: 'numeric' });
+                const timeLeftTxt = prop.isExpired ? 'Udløbet' : formatTimeLeft(prop.timeLeftSec);
+                
+                // Opret det klikbare anker-element, der leder direkte til borgerforslag.dk i en ny fane
+                const card = document.createElement('a');
+                card.href = `https://www.borgerforslag.dk/se-og-stoet-forslag/?Id=${prop.id}`;
+                card.target = '_blank';
+                card.rel = 'noopener noreferrer';
+                card.className = `card-transition block bg-gradient-to-b ${prop.gradientStyle} ${prop.borderStyle} border-2 rounded-2xl p-5 shadow-lg shadow-black/40 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-2xl outline-none focus:ring-4`;
+
+                card.innerHTML = `
+                    <div class="flex items-start justify-between gap-4">
+                        <span class="text-[10px] uppercase tracking-wider font-extrabold px-2.5 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300">
+                            ${prop.id}
+                        </span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-zinc-800/80 text-zinc-400">
+                            ${new Date(prop.created_ts * 1000).toLocaleDateString('da-DK')}
+                        </span>
+                    </div>
+
+                    <h2 class="text-base font-semibold text-white tracking-tight mt-3 mb-4 leading-snug line-clamp-2 h-12" title="${prop.title}">
+                        ${prop.title}
+                    </h2>
+
+                    <!-- Nøgletal -->
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-3.5 text-xs border-t border-zinc-800/80 pt-4 mb-4">
+                        <div>
+                            <span class="text-zinc-500 block text-[10px] uppercase tracking-wider font-semibold">Aktuelle stemmer</span>
+                            <strong class="text-sm font-bold text-white">${prop.currentVotes.toLocaleString('da-DK')}</strong>
+                        </div>
+                        <div>
+                            <span class="text-zinc-500 block text-[10px] uppercase tracking-wider font-semibold">Tid tilbage</span>
+                            <strong class="text-sm font-bold text-white">${timeLeftTxt}</strong>
+                        </div>
+                        <div>
+                            <span class="text-zinc-500 block text-[10px] uppercase tracking-wider font-semibold">Projektion (180d)</span>
+                            <strong class="text-sm font-bold ${prop.textAccent}">${Math.round(prop.estimatedFinal).toLocaleString('da-DK')}</strong>
+                        </div>
+                        <div>
+                            <span class="text-zinc-500 block text-[10px] uppercase tracking-wider font-semibold">Topfart 12t</span>
+                            <strong class="text-sm font-bold text-zinc-300">+${prop.max12h.toLocaleString('da-DK')}</strong>
+                        </div>
+                    </div>
+
+                    <!-- Lille diskret Progress Bar -->
+                    <div class="mb-5">
+                        <div class="flex items-center justify-between text-[10px] font-bold text-zinc-400 uppercase tracking-wide mb-1.5">
+                            <span>Mod målet (50k)</span>
+                            <span>${pct.toFixed(1)}%</span>
+                        </div>
+                        <div class="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
+                            <div class="h-full bg-emerald-500 rounded-full" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Canvas Grafer -->
+                    <div class="space-y-4 pt-3 border-t border-zinc-800/60">
+                        <div class="relative">
+                            <div class="text-[10px] font-semibold text-zinc-500 uppercase tracking-wide mb-1 flex justify-between">
+                                <span>Total stemmer over tid (180d)</span>
+                                <span class="text-[9px] lowercase font-normal text-zinc-600">stiplet = projektion</span>
+                            </div>
+                            <div class="h-32 bg-zinc-950/80 border border-zinc-900 rounded-xl overflow-hidden">
+                                <canvas id="chart-total-${prop.id}"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="relative">
+                            <div class="text-[10px] font-semibold text-zinc-500 uppercase tracking-wide mb-1 flex justify-between">
+                                <span>Nye stemmer pr. minut (Sidste 3t)</span>
+                                <span class="text-zinc-400 font-bold">${prop.rateLast3h.toFixed(1)}/min</span>
+                            </div>
+                            <div class="h-32 bg-zinc-950/80 border border-zinc-900 rounded-xl overflow-hidden">
+                                <canvas id="chart-rate-${prop.id}"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                grid.appendChild(card);
+                
+                // Rendering af de skarpe Canvas grafer (DPI skaleret)
+                requestAnimationFrame(() => {
+                    drawTotalChart(`chart-total-${prop.id}`, prop.votesArr, prop.created_ts, prop.endTs, prop.estimatedFinal);
+                    draw3hChart(`chart-rate-${prop.id}`, prop.votesArr);
+                });
+            });
+        }
+
+        function formatTimeLeft(seconds) {
+            if (seconds <= 0) return '0 dage';
+            const d = Math.floor(seconds / (3600 * 24));
+            const h = Math.floor((seconds % (3600 * 24)) / 3600);
+            return `${d}d ${h}t`;
+        }
+
+        function setupCanvasDPI(canvas) {
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.parentNode.getBoundingClientRect();
+            
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            
+            // Sæt den reelle display size i CSS
+            canvas.style.width = `${rect.width}px`;
+            canvas.style.height = `${rect.height}px`;
+            
+            // Skaler konteksten for High-DPI
+            ctx.scale(dpr, dpr);
+            return { ctx, width: rect.width, height: rect.height };
+        }
+
+        function drawTotalChart(canvasId, votes, createdTs, endTs, estimatedFinal) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            
+            const { ctx, width, height } = setupCanvasDPI(canvas);
+
+            const axisSpace = 20; 
+            const padLeft = 38; // Ekstra plads til Y-akse tal
+            const padRight = 12;
+            const padTop = 12;
+            
+            const graphWidth = width - padLeft - padRight;
+            const graphHeight = height - axisSpace;
+
+            const minTime = createdTs;
+            
+            // Sørg for at vi altid starter præcis på 0 stemmer ved oprettelsestidspunktet
+            const graphVotes = [{ votes: 0, timestamp: createdTs }, ...votes];
+            const maxVotes = graphVotes[graphVotes.length - 1].votes;
+
+            // X-max dækker slutdatoen (180d) hvis projektionslinjen er tændt, ellers stopper den ved seneste faktiske datapunkt
+            const lastVoteTs = votes.length > 0 ? votes[votes.length - 1].timestamp : createdTs;
+            const maxTime = showProjectionLine ? endTs : lastVoteTs;
+
+            // Dynamisk beregning af y-max baseret på de aktive indstillinger (switches)
+            let maxValCandidates = [maxVotes];
+            if (showGoalLine) {
+                maxValCandidates.push(50000);
+            }
+            if (showProjectionLine) {
+                maxValCandidates.push(estimatedFinal);
+            }
+            
+            const minVal = 0;
+            const maxVal = Math.max(...maxValCandidates) * 1.08; 
+
+            const rangeTime = maxTime - minTime || 1;
+            const rangeVal = maxVal - minVal || 1;
+
+            // Helper til at oversætte data til koordinater
+            const getX = (t) => padLeft + ((t - minTime) / rangeTime) * graphWidth;
+            const getY = (v) => (graphHeight - padTop) - ((v - minVal) / rangeVal) * (graphHeight - padTop * 2) + padTop;
+
+            // 1. Tegn gridline og tal på Y-aksen dynamisk afhængig af maxVal skalaen
+            ctx.fillStyle = '#71717a'; // zinc-400
+            ctx.font = '8px Inter, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+
+            const yValues = [0];
+            if (maxVal > 50000) {
+                yValues.push(25000);
+                if (showGoalLine) yValues.push(50000);
+            } else if (maxVal > 10000) {
+                yValues.push(Math.round((maxVal / 2) / 1000) * 1000);
+                yValues.push(Math.round((maxVal * 0.9) / 1000) * 1000);
+            } else {
+                yValues.push(Math.round(maxVal / 2));
+                yValues.push(Math.round(maxVal * 0.9));
+            }
+
+            yValues.forEach(val => {
+                const yPos = getY(val);
+                if (yPos >= padTop && yPos <= graphHeight) {
+                    // Tal-label
+                    const formatted = val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val;
+                    ctx.fillText(formatted, padLeft - 6, yPos);
+
+                    // Vandret hjælpelinje (meget dæmpet)
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#27272a'; // zinc-800
+                    ctx.lineWidth = 0.5;
+                    ctx.moveTo(padLeft, yPos);
+                    ctx.lineTo(width - padRight, yPos);
+                    ctx.stroke();
+                }
+            });
+
+            // 2. Tegn den stiplede mållinje (Y = 50.000) - hvis slået til
+            if (showGoalLine) {
+                const y50k = getY(50000);
+                ctx.beginPath();
+                ctx.strokeStyle = '#ef4444'; // Flot rød dæmpet linje for målet
+                ctx.lineWidth = 1.2;
+                ctx.setLineDash([4, 4]);
+                ctx.moveTo(padLeft, y50k);
+                ctx.lineTo(width - padRight, y50k);
+                ctx.stroke();
+                ctx.setLineDash([]); // Reset dash
+
+                // Label lige over mållinjen
+                ctx.fillStyle = '#f87171';
+                ctx.textAlign = 'left';
+                ctx.fillText('Mål: 50k', padLeft + 4, y50k - 6);
+            }
+
+            // 3. Tegn den historiske kurve (solid emerald grøn)
+            ctx.beginPath();
+            ctx.strokeStyle = '#10b981'; // Emerald grøn
+            ctx.lineWidth = 2.5;
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+
+            graphVotes.forEach((v, i) => {
+                const x = getX(v.timestamp);
+                const y = getY(v.votes);
+                if (i === 0) ctx.moveTo(x, y);
+                else {
+                    // Hvis projektionen er deaktiveret, må vi ikke tegne ud over det seneste punkt på x-aksen
+                    if (v.timestamp <= maxTime) {
+                        ctx.lineTo(x, y);
+                    }
+                }
+            });
+            ctx.stroke();
+
+            // 4. Tegn den stiplede projektionskurve (fra seneste punkt til 180 dages deadline) - hvis slået til
+            if (showProjectionLine && votes.length > 0) {
+                const lastPoint = votes[votes.length - 1];
+                const lastX = getX(lastPoint.timestamp);
+                const lastY = getY(lastPoint.votes);
+                const endX = getX(endTs);
+                const endY = getY(estimatedFinal);
+
+                ctx.beginPath();
+                ctx.strokeStyle = '#6366f1'; // Indigo blå til fremtids-projektion
+                ctx.lineWidth = 1.8;
+                ctx.setLineDash([3, 4]);
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+                ctx.setLineDash([]); // Reset dash
+
+                // Tegn lille slut-punkt på tidslinjen
+                ctx.beginPath();
+                ctx.fillStyle = '#818cf8';
+                ctx.arc(endX, endY, 3, 0, 2 * Math.PI);
+                ctx.fill();
+
+                // Vandret stiplet streg for slut-projektion
+                ctx.beginPath();
+                ctx.strokeStyle = '#4338ca'; // Mørkere indigo
+                ctx.lineWidth = 0.5;
+                ctx.setLineDash([2, 2]);
+                ctx.moveTo(padLeft, endY);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Skriv slut-projektion tekst
+                ctx.fillStyle = '#818cf8';
+                ctx.font = '8px Inter, sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText(`Proj: ${Math.round(estimatedFinal / 1000).toFixed(1)}k`, padLeft + 4, endY - 6);
+            }
+
+            // 5. Tegn X-aksen og tidsstempler
+            ctx.beginPath();
+            ctx.strokeStyle = '#3f3f46'; // zinc-700
+            ctx.lineWidth = 1;
+            ctx.moveTo(padLeft, graphHeight);
+            ctx.lineTo(width - padRight, graphHeight);
+            ctx.stroke();
+
+            ctx.fillStyle = '#a1a1aa'; // zinc-400
+            ctx.font = '8px Inter, sans-serif';
+            ctx.textBaseline = 'top';
+
+            // Venstre label (Start)
+            const labelLeft = new Date(minTime * 1000).toLocaleDateString('da-DK', { day: '2-digit', month: 'short' });
+            ctx.textAlign = 'left';
+            ctx.fillText(labelLeft, padLeft, graphHeight + 4);
+
+            // Højre label (Udløb eller seneste faktiske tidsstempel)
+            const labelRight = new Date(maxTime * 1000).toLocaleDateString('da-DK', { day: '2-digit', month: 'short' });
+            ctx.textAlign = 'right';
+            ctx.fillText(labelRight, width - padRight, graphHeight + 4);
+
+            // Midterste label (Tegnes kun hvis der er bredde nok)
+            if (width > 180) {
+                const labelMid = new Date(((minTime + maxTime) / 2) * 1000).toLocaleDateString('da-DK', { day: '2-digit', month: 'short' });
+                ctx.textAlign = 'center';
+                ctx.fillText(labelMid, padLeft + graphWidth / 2, graphHeight + 4);
+            }
+        }
+
+        function draw3hChart(canvasId, votes) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas || votes.length < 2) return;
+
+            const latestTs = votes[votes.length - 1].timestamp;
+            const threeHoursAgo = latestTs - (3 * 3600);
+            
+            // Sorter og segmenter til de seneste 3 timer
+            const recentVotes = votes.filter(v => v.timestamp >= threeHoursAgo);
+            if (recentVotes.length < 2) return;
+
+            const { ctx, width, height } = setupCanvasDPI(canvas);
+
+            const axisSpace = 20;
+            const padLeft = 38; // Matcher den store grafs venstre-justering
+            const padRight = 12;
+            const padTop = 12;
+            
+            const graphWidth = width - padLeft - padRight;
+            const graphHeight = height - axisSpace;
+
+            // Beregn differentieret tilvækst imellem datapunkter
+            const rateData = [];
+            for (let i = 1; i < recentVotes.length; i++) {
+                const growth = recentVotes[i].votes - recentVotes[i - 1].votes;
+                rateData.push({
+                    ts: recentVotes[i].timestamp,
+                    growth: growth > 0 ? growth : 0 
+                });
+            }
+
+            const minTime = threeHoursAgo;
+            const maxTime = latestTs;
+            const maxGrowth = Math.max(...rateData.map(r => r.growth), 1);
+            const rangeTime = maxTime - minTime;
+
+            // 1. Tegn gridline og tal på Y-aksen (0 og max)
+            ctx.fillStyle = '#71717a';
+            ctx.font = '8px Inter, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+
+            // Bund-værdi
+            ctx.fillText('0', padLeft - 6, graphHeight - padTop);
+            
+            // Top-værdi
+            ctx.fillText(`+${maxGrowth}`, padLeft - 6, padTop);
+
+            // Tynd vandret linje øverst og nederst på grafen
+            ctx.beginPath();
+            ctx.strokeStyle = '#27272a';
+            ctx.lineWidth = 0.5;
+            ctx.moveTo(padLeft, padTop);
+            ctx.lineTo(width - padRight, padTop);
+            ctx.moveTo(padLeft, graphHeight - padTop);
+            ctx.lineTo(width - padRight, graphHeight - padTop);
+            ctx.stroke();
+
+            // 2. Tegn X-akse bundlinje
+            ctx.beginPath();
+            ctx.strokeStyle = '#3f3f46';
+            ctx.lineWidth = 1;
+            ctx.moveTo(padLeft, graphHeight);
+            ctx.lineTo(width - padRight, graphHeight);
+            ctx.stroke();
+
+            // 3. Tegn søjlerne (bars)
+            ctx.fillStyle = '#38bdf8'; // Sky Blue
+            const barWidth = Math.max(1.5, graphWidth / rateData.length - 1.5);
+
+            rateData.forEach(d => {
+                const x = padLeft + ((d.ts - minTime) / rangeTime) * graphWidth;
+                const heightBar = (d.growth / maxGrowth) * (graphHeight - padTop * 2);
+                const y = (graphHeight - padTop) - heightBar;
+                
+                // Center-align søjler på deres x-punkt
+                ctx.fillRect(x - (barWidth / 2), y, barWidth, heightBar);
+            });
+
+            // 4. Tegn X-akse tidslabels (HH:MM format)
+            ctx.fillStyle = '#a1a1aa';
+            ctx.font = '8px Inter, sans-serif';
+            ctx.textBaseline = 'top';
+
+            const formatTime = (ts) => new Date(ts * 1000).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
+
+            // Venstre (3 timer siden)
+            ctx.textAlign = 'left';
+            ctx.fillText(formatTime(minTime), padLeft, graphHeight + 4);
+
+            // Højre (Nu)
+            ctx.textAlign = 'right';
+            ctx.fillText(formatTime(maxTime), width - padRight, graphHeight + 4);
+
+            // Midten (1.5 timer siden)
+            if (width > 180) {
+                ctx.textAlign = 'center';
+                ctx.fillText(formatTime(minTime + 5400), padLeft + graphWidth / 2, graphHeight + 4);
+            }
+        }
+    </script>
+</body>
+</html>
