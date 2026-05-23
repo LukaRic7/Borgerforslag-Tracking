@@ -330,15 +330,30 @@
             const ratePerSec = timeElapsedTotal > 0 ? currentVotes / timeElapsedTotal : 0;
             const estimatedFinal = currentVotes + (ratePerSec * (timeLeftSec > 0 ? timeLeftSec : 0));
 
-            // Sliding window 7 day topscore
+            // Sliding window 7 day daily topscore
             let max7d = 0;
-            let left = 0;
+            let left24 = 0;
+            let left7 = 0;
+
+            const gain24h = new Array(votesArr.length);
             for (let right = 0; right < votesArr.length; right++) {
-                while (votesArr[right].timestamp - votesArr[left].timestamp > 24 * 7 * 3600) {
-                    left++;
+
+                while (
+                    votesArr[right].timestamp - votesArr[left24].timestamp > 24 * 3600
+                ) {
+                    left24++;
                 }
-                let growth = votesArr[right].votes - votesArr[left].votes;
-                if (growth > max7d) max7d = growth;
+
+                gain24h[right] =
+                    votesArr[right].votes - votesArr[left24].votes;
+
+                while (
+                    votesArr[right].timestamp - votesArr[left7].timestamp > 7 * 24 * 3600
+                ) {
+                    left7++;
+                }
+
+                max7d = Math.max(max7d, gain24h[right]);
             }
 
             // Sidste 3 timers væksthastighed pr. minut
@@ -498,7 +513,7 @@
                             <strong class="text-sm font-bold ${prop.textAccent}">${Math.round(prop.estimatedFinal).toLocaleString('da-DK')}</strong>
                         </div>
                         <div>
-                            <span class="text-zinc-500 block text-[10px] uppercase tracking-wider font-semibold">Topfart 7d</span>
+                            <span class="text-zinc-500 block text-[10px] uppercase tracking-wider font-semibold">\>24t vækst (seneste 7d)</span>
                             <strong class="text-sm font-bold text-zinc-300">+${prop.max7d.toLocaleString('da-DK')}</strong>
                         </div>
                     </div>
