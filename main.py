@@ -2,6 +2,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException
 
 from data import get_table_data, get_tables_meta
+from fetching import get_next_call_ts
 
 app = FastAPI()
 
@@ -29,3 +30,7 @@ def get_table(id:str):
         return get_table_data(id)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@app.get('/next-update')
+def get_next_update():
+    return { 'utc_ts': get_next_call_ts() }
