@@ -108,7 +108,7 @@ def get_db_mb_size() -> float:
     - (float): The amount of megabytes the entire datastore takes up.
     """
 
-    total_bytes = subprocess.run(['du', '-sb', 'datastore'],
+    total_bytes = subprocess.run(['du', '-sb', DATASTORE_PATH],
                                  capture_output=True,
                                  text=True)
     
