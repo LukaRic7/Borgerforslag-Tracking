@@ -62,8 +62,7 @@ def fetch_all(user_agent:str=USER_AGENT) -> list[dict]:
 
     suggestions = []
     for suggestion in data.get('data'):
-        if suggestion.get('status') != 'ongoing':
-            continue
+        if suggestion.get('status') != 'ongoing': continue
 
         # All dates are converted to UTC as a standard
         suggestions.append({

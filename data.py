@@ -1,3 +1,4 @@
+from pathlib import Path
 import os, json
 
 DATASTORE_PATH = os.path.join(os.path.dirname(__file__), 'datastore')
@@ -99,3 +100,17 @@ def get_tables_meta() -> list[str]:
     files = os.listdir(DATASTORE_PATH)
 
     return [f.replace('.json', '') for f in files if f.endswith('.json')]
+
+def get_db_mb_size() -> float:
+    """
+    **Get the entrie datastores size in megabytes.**
+    
+    *Returns*:
+    - (float): The amount of megabytes the entire datastore takes up.
+    """
+
+    total_bytes = sum(f.stat().st_size
+                      for f in Path(DATASTORE_PATH).rglob('*')
+                      if f.is_file())
+    
+    return total_bytes / (1024 * 1024)

@@ -1,7 +1,7 @@
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException
 
-from data import get_table_data, get_tables_meta
+from data import get_table_data, get_tables_meta, get_db_mb_size
 
 app = FastAPI()
 
@@ -27,5 +27,12 @@ def get_metas():
 def get_table(id:str):
     try:
         return get_table_data(id)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get('/get-datastore-size')
+def get_datastore_size():
+    try:
+        return { 'size-mb': get_db_mb_size() }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

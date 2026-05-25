@@ -68,6 +68,7 @@
                 <div>
                     <h1 class="text-2xl font-bold tracking-tight text-white">Borgerforslag Monitor</h1>
                     <p id="status-text" class="text-sm text-zinc-400 mt-0.5">Henter det fulde overblik...</p>
+                    <p id="update-status-text" class="text-sm text-zinc-400 mt-0.5">Server opdaterer om: -- minutter</p>
                 </div>
             </div>
 
@@ -202,6 +203,7 @@
         const sortOrderIcon = document.getElementById('sort-order-icon');
         const refreshBtn = document.getElementById('refresh-btn');
         const statusText = document.getElementById('status-text');
+        const updateStatusText = document.getElementById('update-status-text');
         const toggleGoal = document.getElementById('toggle-goal');
         const toggleProjection = document.getElementById('toggle-projection');
         const toggleActiveOnly = document.getElementById('toggle-active-only');
@@ -239,8 +241,36 @@
             renderGrid();
         });
 
+        setInterval(updateCountdown, 60*1000);
+
         // Run application
         fetchData();
+
+        function updateCountdown() {
+            const now = new Date();
+
+            // Current UTC values
+            const utcHour = now.getUTCHours();
+
+            // Find next UTC hour divisible by 3
+            let nextHour = Math.floor(utcHour / 3) * 3 + 3;
+
+            // Create next target time in UTC
+            const target = new Date(now);
+
+            if (nextHour >= 24) {
+                // Next day at 00:00 UTC
+                target.setUTCDate(target.getUTCDate() + 1);
+                nextHour = 0;
+            }
+
+            target.setUTCHours(nextHour, 0, 0, 0);
+
+            // Difference in minutes
+            const diffMs = target - now;
+
+            updateStatusText.innerText = `Server opdaterer om ${Math.floor(diffMs / 1000 / 60)} minutter.`;
+        }
 
         async function fetchData() {
             try {
@@ -289,6 +319,8 @@
                     </div>
                 `;
                 statusText.innerText = 'Forbindelsesfejl.';
+            } finally {
+                updateCountdown();
             }
         }
 
