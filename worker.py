@@ -26,7 +26,7 @@ def seconds_until_next_3rd_hour():
 def run_worker():
     while True:
         suggestions = fetch_all()
-        print(f'Fetching borgerforslag, found: {len(suggestions)}')
+        print(f'Fetching borgerforslag, found: {len(suggestions)}', flush=True)
 
         for suggestion in suggestions:
             try:
@@ -35,11 +35,11 @@ def run_worker():
                     suggestion.get('fetched_ts')
                 )
             except FileNotFoundError:
-                print(f'New borgerforslag detected, ID: {suggestion.get("id")}')
+                print(f'New borgerforslag detected, ID: {suggestion.get("id")}', flush=True)
                 create_new_table(suggestion)
 
         sleep_time = seconds_until_next_3rd_hour()
-        print(f'Sleeping for {sleep_time:,} seconds before fetching again.')
+        print(f'Sleeping for {sleep_time:,} seconds before fetching again.', flush=True)
 
         time.sleep(sleep_time)
 
