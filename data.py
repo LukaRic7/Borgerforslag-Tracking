@@ -1,5 +1,4 @@
-from pathlib import Path
-import os, json
+import os, json, subprocess
 
 DATASTORE_PATH = os.path.join(os.path.dirname(__file__), 'datastore')
 
@@ -109,8 +108,8 @@ def get_db_mb_size() -> float:
     - (float): The amount of megabytes the entire datastore takes up.
     """
 
-    total_bytes = sum(f.stat().st_size
-                      for f in Path(DATASTORE_PATH).rglob('*')
-                      if f.is_file())
+    total_bytes = subprocess.run(['du', '-sb', 'datastore'],
+                                 capture_output=True,
+                                 text=True)
     
-    return total_bytes / (1024 * 1024)
+    return int(total_bytes.stdout.split()[0]) / (1024 * 1024)
